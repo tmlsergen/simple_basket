@@ -7,6 +7,7 @@ use App\Operations\CartHandler;
 use App\Repository\ProductRepository;
 use App\Services\CartServiceInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 
 class ProductManager
 {
@@ -21,7 +22,11 @@ class ProductManager
 
     public function get()
     {
-        return [$this->productRepository->get([], ['paginate' => true]), $this->cartService->getCart()];
+        $products = Cache::remember('products',1200 ,function () {
+            return $this->productRepository->get([], ['paginate' => true]);
+        });
+
+        return [$products, $this->cartService->getCart()];
     }
 
     public function getById(int $productId) : Product
