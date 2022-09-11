@@ -1,0 +1,64 @@
+version: '3'
+
+services:
+    #PHP Service
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        tty: true
+        env_file: .env
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+        networks:
+            - basket-network
+
+    #Nginx Service
+    webserver:
+        image: nginx:alpine
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./:/var/www
+            - ./app.conf:/etc/nginx/conf.d/app.conf
+        networks:
+            - basket-network
+
+    #MySQL Service
+    db:
+        image: mysql:8
+        platform: linux/x86_64
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_DATABASE: basket_db
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - basketData:/var/lib/mysql
+        networks:
+            - basket-network
+    #Redis Service
+    redis:
+        image: redis:latest
+        ports:
+            - "6379:6379"
+        restart: always
+        networks:
+            - basket-network
+
+#Docker Networks
+networks:
+    basket-network:
+        driver: bridge
+
+#Volumes
+volumes:
+    basketData:
+        driver: local
